@@ -39,37 +39,37 @@ clean:
 	rm -f *.o */*.o */*.a *.a drawterm drawterm.exe
 
 kern/libkern.a:
-	(cd kern; $(MAKE))
+	(cd kern && $(MAKE))
 
 exportfs/libexportfs.a:
-	(cd exportfs; $(MAKE))
+	(cd exportfs && $(MAKE))
 
 libauth/libauth.a:
-	(cd libauth; $(MAKE))
+	(cd libauth && $(MAKE))
 	
 libauthsrv/libauthsrv.a:
-	(cd libauthsrv; $(MAKE))
+	(cd libauthsrv && $(MAKE))
 
 libmp/libmp.a:
-	(cd libmp; $(MAKE))
+	(cd libmp && $(MAKE))
 
 libsec/libsec.a:
-	(cd libsec; $(MAKE))
+	(cd libsec && $(MAKE))
 
 libmemdraw/libmemdraw.a:
-	(cd libmemdraw; $(MAKE))
+	(cd libmemdraw && $(MAKE))
 
 libmemlayer/libmemlayer.a:
-	(cd libmemlayer; $(MAKE))
+	(cd libmemlayer && $(MAKE))
 
 libdraw/libdraw.a:
-	(cd libdraw; $(MAKE))
+	(cd libdraw && $(MAKE))
 
 libc/libc.a:
-	(cd libc; $(MAKE))
+	(cd libc && $(MAKE))
 
 libip/libip.a:
-	(cd libip; $(MAKE))
+	(cd libip && $(MAKE))
 
 gui-$(GUI)/libgui.a:
-	(cd gui-$(GUI); $(MAKE))
+	(cd gui-$(GUI) && $(MAKE))

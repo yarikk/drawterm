@@ -83,7 +83,7 @@ OFILES=\
 
 default: $(LIB)
 $(LIB): $(OFILES)
-	$(AR) r $(LIB) $(OFILES)
+	$(AR) /out:$(LIB) $(OFILES)
 	$(RANLIB) $(LIB)
 
 %.$O: %.c

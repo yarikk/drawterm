@@ -8,18 +8,21 @@ OFILES=\
 	sha1block.$O\
 	tas.$O
 
+OFILES=\
+	getcallerpc.$O
+
 default: $(LIB)
 $(LIB): $(OFILES)
-	$(AR) r $(LIB) $(OFILES)
+	$(AR) /out:$(LIB) $(OFILES)
 	$(RANLIB) $(LIB)
 
-%.$O: %.c
-	$(CC) $(CFLAGS) $*.c
+.SUFFIXES: .s .spp
 
-%.$O: %.s
+.s.$O:
 	$(AS) -o $*.$O $*.s
 
-%.s: %.spp
-	cpp $*.spp >$*.s
+#.spp.s:
+#	$(CXX) $*.spp >$*.s
 
-
+.spp.$O:
+	$(AS) -c -o $*.$O $*.spp

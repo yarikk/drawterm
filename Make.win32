@@ -22,10 +22,14 @@ TARG=drawterm.exe
 XOFILES=9ball.$O
 
 # Windows via MSVC
-#AR=???
-#CC=cl
-#CFLAGS=-c -nologo -W3 -YX -Zi -MT -Zl -Iinclude -DWINDOWS
-#O=obj
+AR=lib
+RANLIB=echo
+AS=ml
+CC=cl
+CFLAGS=-c -nologo -W3 -Zi -MT -Zl -I$(ROOT)/include -I$(ROOT) -I$(ROOT)/kern -DWINDOWS
+LDFLAGS=-nologo -mwindows
+O=obj
+WINDRES=rc
 #FS=fs-win32
 #IP=win32
 #OS=win32
@@ -35,8 +39,9 @@ all: default
 
 # for root
 libmachdep.a:
-	(cd win32-386; make)
+	(cd win32-386 && $(MAKE))
 
 9ball.$O: 9ball.rc 9ball.ico
-	$(WINDRES) -i 9ball.rc -o 9ball.o
+#	$(WINDRES) -i 9ball.rc -o 9ball.$O
+	$(WINDRES) -nologo -fo 9ball.$O 9ball.rc
 
