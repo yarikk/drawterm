@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: C (Windows) / Upload to Release v0.0.1-pre-demo
 
 on:
   push:
