@@ -9,12 +9,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         conf: [unix, win32]
         include:
           - os: macos-latest
             conf: osx-cocoa
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
