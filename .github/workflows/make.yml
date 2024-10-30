@@ -21,7 +21,7 @@ jobs:
     - name: Set tag name
       id: tag
       run: |
-        echo "tag=${{ github.ref }}" >> $GITHUB_OUTPUT
+        echo "tag=$(basename ${{ github.ref }})" >> $GITHUB_OUTPUT
         
     - name: Create Release
       env:
