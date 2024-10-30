@@ -49,6 +49,8 @@ static ulong pal[256];
 static int readybit;
 static Rendez rend;
 
+extern int mousequeue;
+
 static int
 isready(void*a)
 {
@@ -110,8 +112,8 @@ screensize(Rectangle r, ulong chan)
 	gscreen->clipr = ZR;
 }
 
-Memdata*
-attachscreen(Rectangle *r, ulong *chan, int *depth, int *width, int *softscreen)
+uchar*
+attachscreen(Rectangle *r, ulong *chan, int *depth, int *width, int *softscreen, void **X)
 {
 	LOG();
 	*r = gscreen->clipr;
@@ -121,7 +123,7 @@ attachscreen(Rectangle *r, ulong *chan, int *depth, int *width, int *softscreen)
 	*softscreen = 1;
 
 	gscreen->data->ref++;
-	return gscreen->data;
+	return gscreen->data->bdata;
 }
 
 char *
@@ -196,6 +198,34 @@ void
 setcolor(ulong i, ulong r, ulong g, ulong b)
 {
 	pal[i] = ((r&0xFF)<<16) & ((g&0xFF)<<8) & (b&0xFF);
+}
+
+void
+sendbuttons(int b, int x, int y)
+{
+	int i;
+	lock(&mouse.lk);
+	i = mouse.wi;
+	if(mousequeue) {
+		if(i == mouse.ri || mouse.lastb != b || mouse.trans) {
+			mouse.wi = (i+1)%Mousequeue;
+			if(mouse.wi == mouse.ri)
+				mouse.ri = (mouse.ri+1)%Mousequeue;
+			mouse.trans = mouse.lastb != b;
+		} else {
+			i = (i-1+Mousequeue)%Mousequeue;
+		}
+	} else {
+		mouse.wi = (i+1)%Mousequeue;
+		mouse.ri = i;
+	}
+	mouse.queue[i].xy.x = x;
+	mouse.queue[i].xy.y = y;
+	mouse.queue[i].buttons = b;
+	mouse.queue[i].msec = ticks();
+	mouse.lastb = b;
+	unlock(&mouse.lk);
+	wakeup(&mouse.r);
 }
 
 void
@@ -378,7 +408,8 @@ mainproc(void *aux)
 {
 	NSPoint p;
 	p = [_window convertPointToBacking:[_window mouseLocationOutsideOfEventStream]];
-	absmousetrack(p.x, [myview convertSizeToBacking:myview.frame.size].height - p.y, 0, ticks());
+	// absmousetrack(p.x, [myview convertSizeToBacking:myview.frame.size].height - p.y, 0, ticks());
+	sendbuttons(0, p.x, [myview convertSizeToBacking:myview.frame.size].height - p.y);
 }
 
 - (void) windowDidResignKey:(id)arg
@@ -465,7 +496,7 @@ evkey(uint v)
 	case NSEndFunctionKey: return Kend;
 	case NSPageUpFunctionKey: return Kpgup;
 	case NSPageDownFunctionKey: return Kpgdown;
-	case NSScrollLockFunctionKey: return Kscroll;
+//	case NSScrollLockFunctionKey: return Kscroll;
 	case NSBeginFunctionKey:
 	case NSF13FunctionKey:
 	case NSF14FunctionKey:
@@ -532,14 +563,16 @@ evkey(uint v)
 	u = [NSEvent pressedMouseButtons];
 	u = (u&~6) | (u&4)>>1 | (u&2)<<1;
 	if((x & ~_mods & NSEventModifierFlagShift) != 0)
-		kbdkey(Kshift, 1);
+//		kbdkey(Kshift, 1);
+		kbdputc(kbdq, Kshift);
 	if((x & ~_mods & NSEventModifierFlagControl) != 0){
 		if(u){
 			u |= 1;
 			[self sendmouse:u];
 			return;
 		}else
-			kbdkey(Kctl, 1);
+			//kbdkey(Kctl, 1);
+			kbdputc(kbdq, Kctl);
 	}
 	if((x & ~_mods & NSEventModifierFlagOption) != 0){
 		if(u){
@@ -547,43 +580,50 @@ evkey(uint v)
 			[self sendmouse:u];
 			return;
 		}else
-			kbdkey(Kalt, 1);
+			//kbdkey(Kalt, 1);
+			kbdputc(kbdq, Kalt);
 	}
 	if((x & NSEventModifierFlagCommand) != 0)
 		if(u){
 			u |= 4;
 			[self sendmouse:u];
 		}
-	if((x & ~_mods & NSEventModifierFlagCapsLock) != 0)
-		kbdkey(Kcaps, 1);
+//	if((x & ~_mods & NSEventModifierFlagCapsLock) != 0)
+//		kbdkey(Kcaps, 1);
 	if((~x & _mods & NSEventModifierFlagShift) != 0)
-		kbdkey(Kshift, 0);
+//		kbdkey(Kshift, 0);
+		kbdputc(kbdq, Kshift);
 	if((~x & _mods & NSEventModifierFlagControl) != 0)
-		kbdkey(Kctl, 0);
+//		kbdkey(Kctl, 0);
+		kbdputc(kbdq, Kctl);
 	if((~x & _mods & NSEventModifierFlagOption) != 0){
-		kbdkey(Kalt, 0);
+//		kbdkey(Kalt, 0);
+		kbdputc(kbdq, Kalt);
 		if(_breakcompose){
-			kbdkey(Kalt, 1);
-			kbdkey(Kalt, 0);
+//			kbdkey(Kalt, 1);
+//			kbdkey(Kalt, 0);
 			_breakcompose = NO;
 		}
 	}
-	if((~x & _mods & NSEventModifierFlagCapsLock) != 0)
-		kbdkey(Kcaps, 0);
+//	if((~x & _mods & NSEventModifierFlagCapsLock) != 0)
+//		kbdkey(Kcaps, 0);
 	_mods = x;
 }
 
 - (void) clearMods {
 	if((_mods & NSEventModifierFlagShift) != 0){
-		kbdkey(Kshift, 0);
+//		kbdkey(Kshift, 0);
+		kbdputc(kbdq, Kshift);
 		_mods ^= NSEventModifierFlagShift;
 	}
 	if((_mods & NSEventModifierFlagControl) != 0){
-		kbdkey(Kctl, 0);
+//		kbdkey(Kctl, 0);
+		kbdputc(kbdq, Kctl);
 		_mods ^= NSEventModifierFlagControl;
 	}
 	if((_mods & NSEventModifierFlagOption) != 0){
-		kbdkey(Kalt, 0);
+//		kbdkey(Kalt, 0);
+		kbdputc(kbdq, Kalt);
 		_mods ^= NSEventModifierFlagOption;
 	}
 }
@@ -609,14 +649,15 @@ evkey(uint v)
 		}else if(m & NSEventModifierFlagCommand)
 			u = 4;
 	}
-	absmousetrack(p.x, [self convertSizeToBacking:self.frame.size].height - p.y, u, ticks());
+	//absmousetrack(p.x, [self convertSizeToBacking:self.frame.size].height - p.y, u, ticks());
+	sendbuttons(u, p.x, [self convertSizeToBacking:self.frame.size].height - p.y);
 	if(u && _lastInputRect.size.width && _lastInputRect.size.height)
 		[self resetLastInputRect];
 }
 
 - (void) sendmouse:(NSUInteger)u
 {
-	mousetrack(0, 0, u, ticks());
+	sendbuttons(u, 0, 0);
 	if(u && _lastInputRect.size.width && _lastInputRect.size.height)
 		[self resetLastInputRect];
 }
@@ -727,8 +768,9 @@ evkey(uint v)
 static void
 keystroke(Rune r)
 {
-	kbdkey(r, 1);
-	kbdkey(r, 0);
+//	kbdkey(r, 1);
+//	kbdkey(r, 0);
+	kbdputc(kbdq, r);
 }
 
 // conforms to protocol NSTextInputClient
@@ -883,7 +925,7 @@ keystroke(Rune r)
 			keystroke(Kright);
 		l = _tmpText.length+2+2*(_selectedRange.length > 0);
 		for(uint i = 0; i < l; ++i)
-			keystroke(Kbs);
+			keystroke('\b');
 	}
 }
 @end

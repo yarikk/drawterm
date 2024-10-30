@@ -44,6 +44,8 @@ extern	Screeninfo screen;
 
 void	screeninit(void);
 void	screenload(Rectangle, int, uchar *, Point, int);
+void	screensize(Rectangle, ulong);
+void	screenresize(Rectangle);
 
 void	getcolor(ulong, ulong*, ulong*, ulong*);
 void	setcolor(ulong, ulong, ulong, ulong);
