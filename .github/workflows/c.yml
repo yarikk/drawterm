@@ -12,6 +12,9 @@ jobs:
       fail-fast: false
       matrix:
         conf: [unix, win32]
+        include:
+          - os: macos-latest
+            conf: osx
 
     runs-on: ubuntu-latest
 
