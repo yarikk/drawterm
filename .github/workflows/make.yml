@@ -40,4 +40,4 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
-      run: gh release edit "${{ needs.release.outputs.tag }}" --draft=false
+      run: gh release edit "${{ steps.tag.outputs.tag }}" --draft=false
