@@ -12,7 +12,7 @@ jobs:
         conf: [unix, win32]
         include:
           - os: macos-latest
-            conf: osx
+            conf: osx-cocoa
 
     runs-on: ubuntu-latest
 
