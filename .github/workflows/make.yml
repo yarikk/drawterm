@@ -28,7 +28,7 @@ jobs:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
       run: |
-        tag="${{ steps.tag.outputs.tag }}" gh release create --draft "$tag" --title "$tag"
+        tag="${{ steps.tag.outputs.tag }}"; gh release create --draft "$tag" --title "$tag"
         
     - name: Upload
       env:
